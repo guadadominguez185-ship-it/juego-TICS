@@ -1,0 +1,252 @@
+<!--
+Juego_TICs_Educacion_Secundaria.html
+Un solo archivo HTML/CSS/JS que implementa un juego educativo interactivo sobre TICs en la educación y la sociedad.
+Cómo usar: guardar como "index.html" y subir a cualquier hosting estático (GitHub Pages, Netlify, Vercel, o abrir localmente). No requiere backend.
+Personalización: busca la constante QUESTIONS, MATCH_PAIRS y SCENARIOS en el bloque <script> para editar preguntas, emparejamientos y escenarios.
+-->
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Juego: TICs en la Educación y la Sociedad</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#3b82f6;--muted:#94a3b8;--good:#16a34a;--bad:#ef4444}
+    *{box-sizing:border-box;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071024 0%, #07192b 100%);color:#e6eef8}
+    .wrap{max-width:1000px;margin:24px auto;padding:18px}
+    header{display:flex;align-items:center;gap:14px}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#06b6d4);display:flex;align-items:center;justify-content:center;font-weight:700}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:6px 0 16px;color:var(--muted)}
+    .card{background:rgba(255,255,255,0.03);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .center{display:flex;align-items:center;justify-content:center}
+    #screen{min-height:420px;margin-top:18px}
+
+    /* Start screen */
+    .bigbtn{background:linear-gradient(90deg,var(--accent),#06b6d4);padding:12px 18px;border-radius:10px;font-weight:700;border:none;color:white;cursor:pointer}
+    .mutebtn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:var(--muted)}
+
+    /* Game area */
+    .row{display:flex;gap:12px}
+    .col{flex:1}
+    .scoreboard{display:flex;gap:12px;align-items:center}
+    .pill{background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:999px}
+
+    /* Question */
+    .question{font-size:18px;margin-bottom:12px}
+    .answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .ans{background:#081426;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+    .ans:hover{transform:translateY(-3px)}
+    .ans.correct{outline:3px solid rgba(22,163,74,0.18)}
+    .ans.wrong{outline:3px solid rgba(239,68,68,0.14)}
+
+    /* Matching */
+    .match-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .term, .def{background:#061226;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
+    .term.dragging{opacity:0.6}
+
+    /* Scenario */
+    .scenario{background:#071428;padding:12px;border-radius:8px}
+    .opt{padding:10px;margin-top:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+
+    @media(max-width:720px){.answers{grid-template-columns:1fr}.row{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">TIC</div>
+      <div>
+        <h1>Juego: TICs en la Educación y la Sociedad</h1>
+        <p class="lead">Un juego interactivo, pensado para estudiantes de secundaria. Aprendé sobre tecnología, ética, seguridad digital y su impacto social.</p>
+      </div>
+    </header>
+
+    <div id="screen" class="card">
+      <!-- Contenido generado por JavaScript -->
+    </div>
+
+    <footer class="center">
+      <div style="flex:1;color:var(--muted)">Consejos: fomenta el debate tras cada escenario. Puedes editar preguntas en el archivo para adaptarlo al curso.</div>
+      <div class="pill">v1.0 — Lista para subir</div>
+    </footer>
+  </div>
+
+  <script>
+  // --- CONTENIDO EDITABLE: preguntas, pares para emparejar y escenarios ---
+  const QUESTIONS = [
+    {q: '¿Qué significa "TIC"?', choices: ['Tareas, Investigación y Clase','Tecnologías de la Información y la Comunicación','Técnicas de Información Cultural','Transporte, Internet y Comunicación'], a:1, expl: 'TIC = Tecnologías de la Información y la Comunicación.'},
+    {q: '¿Cuál es una ventaja de usar TICs en clase?', choices: ['Aumenta la interacción y acceso a recursos','Hace imposible el aprendizaje','Reemplaza a los docentes al 100%','Es más caro que todo lo demás'], a:0, expl: 'Las TICs enriquecen y diversifican las formas de aprender.'},
+    {q: '¿Cuál es un riesgo relacionado con el uso de redes sociales?', choices: ['Mayor privacidad','Ciberdelincuencia y desinformación','Mejor rendimiento escolar','Acceso limitado a información'], a:1, expl: 'Hay riesgos como desinformación, bullying y pérdida de privacidad.'},
+    {q: '¿Qué debes hacer si recibís un mensaje sospechoso pidiendo datos personales?', choices: ['Compartirlo con amigos','Dar los datos rápido','Reportarlo y no compartir datos','Ignorarlo y borrarlo sin decírselo a nadie'], a:2, expl: 'Reportar y consultar con un adulto de confianza es lo correcto.'}
+  ];
+
+  const MATCH_PAIRS = [
+    {term:'Phishing', def:'Técnica para obtener datos mediante engaños.'},
+    {term:'Copia de seguridad', def:'Guardar información para recuperarla en caso de pérdida.'},
+    {term:'Licencia Creative Commons', def:'Derechos que permiten compartir y usar recursos con condiciones.'},
+    {term:'Brecha digital', def:'Desigualdad en acceso a tecnologías e Internet.'}
+  ];
+
+  const SCENARIOS = [
+    {title:'Imagen en clase', text:'Un compañero publica una foto tuya en redes sin permiso y se burla. ¿Qué hacés?', options:[
+      {t:'Responder con insultos y defenderte','score':0,'feedback':'Responding aggressively escalates the situation.'},
+      {t:'Hablar con el compañero en privado y pedir que la borre; si no, pedir ayuda al docente','score':2,'feedback':'Comunicación y pedir ayuda son buenos pasos.'},
+      {t:'Compartir la foto para que otros se rían','score':0,'feedback':'Esto fomenta el acoso.'}
+    ]},
+    {title:'Noticia dudosa', text:'Ves una noticia muy impactante en redes pero sin fuentes. ¿Qué hacés?', options:[
+      {t:'Compartirla de inmediato','score':0,'feedback':'Compartir sin verificar propaga desinformación.'},
+      {t:'Verificar en fuentes confiables antes de compartir','score':2,'feedback':'Verificar fuentes ayuda a combatir la desinformación.'},
+      {t:'Ignorar todo lo que no te gusta','score':1,'feedback':'Ignorar no ayuda a informar a otros correctamente.'}
+    ]}
+  ];
+  // --- FIN EDITABLE ---
+
+  // Estado del juego
+  let state = {score:0, level:0, startTime: null, name: ''};
+
+  const screen = document.getElementById('screen');
+
+  function renderStart(){
+    screen.innerHTML = `
+      <div class="center" style="flex-direction:column;gap:14px">
+        <h2>¡Bienvenidos!</h2>
+        <p>Jugá solo o en equipo. El juego combina preguntas, emparejamientos y decisiones en escenarios reales.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+          <input id="playername" placeholder="Tu nombre (opcional)" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit" />
+          <button class="bigbtn" id="startBtn">Comenzar partida</button>
+        </div>
+        <small style="color:var(--muted);margin-top:8px">Tiempo recomendado: 20-30 minutos. Al finalizar podés discutir las respuestas con el grupo.</small>
+      </div>
+    `;
+    document.getElementById('startBtn').onclick = ()=>{
+      const name = document.getElementById('playername').value.trim(); state.name = name; state.score=0; state.level=0; state.startTime=Date.now(); renderLevel();
+    };
+  }
+
+  function renderLevel(){
+    // ciclo: preguntas -> matching -> escenarios, repetir 2 rondas
+    const levelType = state.level % 3; // 0=trivia,1=match,2=scenario
+    if(state.level>=6){ renderEnd(); return; }
+    if(levelType===0) renderTrivia();
+    else if(levelType===1) renderMatch();
+    else renderScenario();
+  }
+
+  function renderHeader(){
+    return `<div class="row"><div class="col"><div class="scoreboard"><div class="pill">Jugador: ${state.name||'Anon'}</div><div class="pill">Nivel: ${state.level+1}</div><div class="pill">Puntaje: ${state.score}</div></div></div><div style="display:flex;gap:8px"><button class="mutebtn" id="homeBtn">Volver al inicio</button></div></div><hr style="border:none;border-top:1px solid rgba(255,255,255,0.02);margin:12px 0"/>`;
+  }
+
+  function renderTrivia(){
+    const q = QUESTIONS[(state.level/3|0)+ (state.level%3) % QUESTIONS.length] || QUESTIONS[state.level % QUESTIONS.length];
+    screen.innerHTML = renderHeader() + `
+      <div>
+        <div class="question">${q.q}</div>
+        <div class="answers">${q.choices.map((c,i)=>`<div class="ans" data-i="${i}">${c}</div>`).join('')}</div>
+      </div>
+    `;
+    document.getElementById('homeBtn').onclick = ()=>{ renderStart(); };
+    document.querySelectorAll('.ans').forEach(el=>el.addEventListener('click',()=>{
+      const i = +el.dataset.i;
+      document.querySelectorAll('.ans').forEach(a=>a.style.pointerEvents='none');
+      if(i===q.a){ el.classList.add('correct'); state.score += 2; showExpl(q.expl,true); }
+      else{ el.classList.add('wrong'); state.score += 0; showExpl(q.expl,false); }
+    }));
+  }
+
+  function showExpl(text, correct){
+    const expl = document.createElement('div'); expl.style.marginTop='12px'; expl.innerHTML = `<div style="padding:10px;border-radius:8px;background:rgba(255,255,255,0.02)"><strong>Explicación:</strong> ${text}</div>`;
+    screen.appendChild(expl);
+    const next = document.createElement('div'); next.style.marginTop='12px'; next.innerHTML = `<button class="bigbtn">Siguiente</button>`;
+    next.onclick = ()=>{ state.level++; renderLevel(); };
+    screen.appendChild(next);
+  }
+
+  function renderMatch(){
+    // shuffle
+    const left = MATCH_PAIRS.map(m=>m.term).sort(()=>Math.random()-0.5);
+    const right = MATCH_PAIRS.map(m=>m.def).sort(()=>Math.random()-0.5);
+    screen.innerHTML = renderHeader() + `
+      <div>
+        <div class="question">Arrastra la definición correcta sobre la palabra correspondiente.</div>
+        <div class="match-grid">
+          <div id="leftCol">${left.map((t,i)=>`<div class="term" draggable="true" data-term="${t}">${t}</div>`).join('')}</div>
+          <div id="rightCol">${right.map((d,i)=>`<div class="def" data-def="${d}">${d}</div>`).join('')}</div>
+        </div>
+      </div>
+    `;
+    document.getElementById('homeBtn').onclick = ()=>{ renderStart(); };
+    let scoreHere = 0;
+    document.querySelectorAll('.term').forEach(t=>{
+      t.addEventListener('dragstart', e=>{ t.classList.add('dragging'); e.dataTransfer.setData('text/plain', t.dataset.term);} );
+      t.addEventListener('dragend', ()=>t.classList.remove('dragging'));
+    });
+    document.querySelectorAll('.def').forEach(d=>{
+      d.addEventListener('dragover', e=>e.preventDefault());
+      d.addEventListener('drop', e=>{
+        e.preventDefault(); const term = e.dataTransfer.getData('text/plain');
+        const def = d.dataset.def; const correct = MATCH_PAIRS.some(p=>p.term===term && p.def===def);
+        if(correct){ d.style.border = '2px dashed rgba(22,163,74,0.4)'; scoreHere+=2; d.innerHTML = `<strong>✅ ${term}</strong><div style="font-size:13px;margin-top:6px;color:var(--muted)">${def}</div>`; }
+        else{ d.style.border = '2px dashed rgba(239,68,68,0.2)'; scoreHere+=0; d.innerHTML = `<strong>✖ ${term}</strong><div style="font-size:13px;margin-top:6px;color:var(--muted)">${def}</div>`; }
+        // remove the dragged term element
+        document.querySelectorAll('.term').forEach(tt=>{ if(tt.dataset.term===term) tt.style.visibility='hidden'; });
+      });
+    });
+
+    const btn = document.createElement('div'); btn.style.marginTop='12px'; btn.innerHTML = `<button class="bigbtn">Finalizar emparejamiento</button>`;
+    btn.onclick = ()=>{ state.score += scoreHere; state.level++; renderLevel(); };
+    screen.appendChild(btn);
+  }
+
+  function renderScenario(){
+    const sc = SCENARIOS[state.level%SCENARIOS.length];
+    screen.innerHTML = renderHeader() + `
+      <div>
+        <div class="scenario"><strong>${sc.title}</strong><p style="margin:8px 0">${sc.text}</p></div>
+        <div id="opts">${sc.options.map((o,i)=>`<div class="opt" data-i="${i}">${o.t}</div>`).join('')}</div>
+      </div>
+    `;
+    document.getElementById('homeBtn').onclick = ()=>{ renderStart(); };
+    document.querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{
+      const i = +el.dataset.i; const sel = sc.options[i];
+      document.querySelectorAll('.opt').forEach(o=>o.style.pointerEvents='none');
+      el.style.outline = sel.score>0 ? '3px solid rgba(22,163,74,0.18)' : '3px solid rgba(239,68,68,0.14)';
+      const fb = document.createElement('div'); fb.style.marginTop='10px'; fb.innerHTML = `<div style="padding:10px;border-radius:8px;background:rgba(255,255,255,0.02)">${sel.feedback}</div>`;
+      screen.appendChild(fb);
+      state.score += sel.score;
+      const next = document.createElement('div'); next.style.marginTop='10px'; next.innerHTML = `<button class="bigbtn">Siguiente</button>`;
+      next.onclick = ()=>{ state.level++; renderLevel(); };
+      screen.appendChild(next);
+    }));
+  }
+
+  function renderEnd(){
+    const elapsed = Math.round((Date.now()-state.startTime)/1000);
+    screen.innerHTML = `
+      <div class="center" style="flex-direction:column;gap:10px">
+        <h2>¡Partida Finalizada!</h2>
+        <p>Jugador: ${state.name||'Anon'}</p>
+        <p>Puntaje final: <strong>${state.score}</strong></p>
+        <p>Tiempo: ${elapsed} segundos</p>
+        <div style="display:flex;gap:8px">
+          <button class="bigbtn" id="playAgain">Jugar otra vez</button>
+          <button class="mutebtn" id="shareBtn">Copiar resumen</button>
+        </div>
+        <div style="margin-top:8px;color:var(--muted)">Sugerencia: luego de jugar, discutir las respuestas y completar una actividad escrita sobre lo aprendido.</div>
+      </div>
+    `;
+    document.getElementById('playAgain').onclick = ()=>{ renderStart(); };
+    document.getElementById('shareBtn').onclick = ()=>{
+      const text = `Juego TICs - ${state.name||'Anon'} - Puntaje: ${state.score} - Tiempo: ${elapsed}s`;
+      navigator.clipboard?.writeText(text).then(()=>alert('Resumen copiado al portapapeles'), ()=>alert('No se pudo copiar.'));
+    };
+  }
+
+  // inicio
+  renderStart();
+  </script>
+</body>
+</html>
